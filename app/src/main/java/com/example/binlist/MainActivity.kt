@@ -1,40 +1,34 @@
 package com.example.binlist
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var database: AppDatabase
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://lookup.binlist.net/")
         .addConverterFactory(GsonConverterFactory.create())
         .build()
-
     private val api = retrofit.create(BinApi::class.java)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+
         val binInput = findViewById<EditText>(R.id.binInput)
         val fetchButton = findViewById<Button>(R.id.fetchButton)
         val resultText = findViewById<TextView>(R.id.resultText)
+        val historyButton = findViewById<Button>(R.id.historyButton)
+
+        database = AppDatabase.getDatabase(this)
 
         fetchButton.setOnClickListener {
             val bin = binInput.text.toString()
@@ -42,13 +36,23 @@ class MainActivity : AppCompatActivity() {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val response = api.getBinInfo(bin)
+                        val binInfoEntity = BinInfoEntity(
+                            bin = bin,
+                            scheme = response.scheme,
+                            type = response.type,
+                            brand = response.brand,
+                            country = response.country?.name,
+                            latitude = response.country?.latitude,
+                            longitude = response.country?.longitude,
+                            bankName = response.bank.name,
+                            bankUrl = response.bank.url,
+                            bankPhone = response.bank.phone,
+                            bankCity = response.bank.city
+                        )
+                        database.binDao().insertBinInfo(binInfoEntity)
+
                         runOnUiThread {
-                            resultText.text = buildString {
-                                append("Cтрана: ${response.country?.name},")
-                                append("  координаты: ${response.country?.longitude}-${response.country?.latitude}, ")
-                                append(" тип карты: ${response.scheme}, данные банка(url: ${response.bank.url}, ")
-                                append(" телефон: ${response.bank.phone}, город: ${response.bank.city})")
-                            }
+                            resultText.text = response.toString()
                         }
                     } catch (e: Exception) {
                         runOnUiThread {
@@ -61,5 +65,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        historyButton.setOnClickListener {
+            startActivity(Intent(this, HistoryActivity::class.java))
+        }
     }
 }

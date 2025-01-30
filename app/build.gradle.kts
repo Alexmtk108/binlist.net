@@ -1,17 +1,13 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("com.google.dagger.hilt.android") version "2.48"
     id("kotlin-kapt")
+
 }
 
 android {
     namespace = "com.example.binlist"
     compileSdk = 35
-
-    kapt {
-        correctErrorTypes = true
-    }
 
     defaultConfig {
         applicationId = "com.example.binlist"
@@ -48,18 +44,13 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.room.common)
-    implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.espresso.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation (libs.retrofit)
     implementation (libs.converter.gson)
     implementation (libs.kotlinx.coroutines.android)
-    implementation (libs.androidx.room.gradle.plugin)
-    kapt(libs.androidx.room.compiler)
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    implementation (libs.androidx.room.runtime)
+    kapt (libs.androidx.room.compiler)
+    implementation (libs.androidx.room.ktx)
 }
